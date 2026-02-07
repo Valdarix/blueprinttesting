@@ -1,0 +1,78 @@
+Config.PenalCodes = {
+    -- Category: Traffic Violations
+    {
+        code = '1-01',
+        title = 'Speeding',
+        category = 'Traffic',
+        type = 'infraction',
+        fine = 500,
+        jailTime = 0,
+        points = 1,
+    },
+    {
+        code = '1-02',
+        title = 'Reckless Driving',
+        category = 'Traffic',
+        type = 'misdemeanor',
+        fine = 1500,
+        jailTime = 5,
+        points = 2,
+    },
+    {
+        code = '1-03',
+        title = 'Evading Law Enforcement',
+        category = 'Traffic',
+        type = 'felony',
+        fine = 5000,
+        jailTime = 15,
+        points = 3,
+    },
+    -- Category: Crimes Against Persons
+    {
+        code = '2-01',
+        title = 'Assault',
+        category = 'Persons',
+        type = 'misdemeanor',
+        fine = 2000,
+        jailTime = 10,
+        points = 2,
+    },
+    {
+        code = '2-02',
+        title = 'Assault with a Deadly Weapon',
+        category = 'Persons',
+        type = 'felony',
+        fine = 7500,
+        jailTime = 25,
+        points = 4,
+    },
+    {
+        code = '2-03',
+        title = 'Attempted Murder',
+        category = 'Persons',
+        type = 'felony',
+        fine = 15000,
+        jailTime = 45,
+        points = 5,
+    },
+    -- Category: Property Crimes
+    {
+        code = '3-01',
+        title = 'Robbery',
+        category = 'Property',
+        type = 'felony',
+        fine = 5000,
+        jailTime = 20,
+        points = 3,
+    },
+    {
+        code = '3-02',
+        title = 'Grand Theft Auto',
+        category = 'Property',
+        type = 'felony',
+        fine = 3500,
+        jailTime = 15,
+        points = 3,
+    },
+    -- Server owners: Add more penal codes below
+}

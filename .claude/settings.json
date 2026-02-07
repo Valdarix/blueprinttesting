@@ -1,0 +1,19 @@
+{
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/session-start.js"
+      }
+    ],
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "node .claude/hooks/pre-compact.js"
+      }
+    ]
+  }
+}

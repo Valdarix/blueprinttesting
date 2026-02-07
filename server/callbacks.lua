@@ -1,0 +1,2 @@
+-- Server callbacks for NUI communication
+-- Each module registers its own callbacks in server/modules/

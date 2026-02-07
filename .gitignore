@@ -1,2 +1,34 @@
 # Claude Code - local/personal memory (not shared)
 CLAUDE.local.md
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+vendor/
+# Environment
+.env
+.env.local
+.env*.local
+# Build output
+dist/
+build/
+out/
+.next/
+target/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+# OS
+.DS_Store
+Thumbs.db
+# Logs
+*.log
+npm-debug.log*
+# FiveM / NUI
+web/node_modules/
+web/dist/
