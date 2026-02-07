@@ -294,24 +294,33 @@ The lead agent fills these in with project-specific information gathered during 
 
 ## Git Workflow
 
+### GitHub Issue-Driven Workflow
+
+All code changes start with a GitHub issue. Use the `gh` CLI for all GitHub operations.
+
 ### Branching Strategy
 
 {{BRANCHING_STRATEGY}}
 
-<!-- Main branch, feature/fix/chore branch naming. -->
+<!-- Branch naming links to issues: type/issue-N-description
+     Create branches: gh issue develop N --branch type/issue-N-description -->
 
 ### Commit Messages
 
 {{COMMIT_FORMAT}}
 
-<!-- Format spec. Always include:
+<!-- Conventional commits: type(scope): description
+     Include Closes #N or Refs #N in commit body.
+     Always include:
      Co-Authored-By: CornerstoneScripts <support@cornerstonescripts.dev> -->
 
 ### PR Process
 
 {{PR_PROCESS}}
 
-<!-- Branch → commits → PR → checks → merge strategy. -->
+<!-- Issue → branch → plan approval → implement → PR → code review → merge
+     PR title: conventional format. PR body: Closes #N.
+     Use gh pr create, gh pr review, gh pr merge --squash --delete-branch. -->
 
 ## Component / Module Patterns
 
@@ -424,17 +433,35 @@ Architectural decisions and their rationale. Newest entries first.
 
 <!-- Task assignment, status updates, peer collaboration, broadcast policy. -->
 
-## Task Assignment Flow
+## GitHub Issue-Driven Workflow
 
-{{TASK_FLOW}}
+Every task is tracked as a GitHub issue. The full lifecycle:
+1. **Team lead** creates GitHub issues from roadmap tasks with acceptance criteria
+2. **Teammate** claims issue: `gh issue edit N --add-assignee @me`
+3. **Teammate** creates branch: `gh issue develop N --branch type/issue-N-description`
+4. **Teammate** plans approach and submits for team lead approval (plan mode)
+5. **Team lead** reviews plan — approves or rejects with feedback
+6. **Teammate** implements, tests, commits with `Closes #N` in body
+7. **Teammate** creates PR: `gh pr create --title "type(scope): desc" --body "Closes #N"`
+8. **Code reviewer** reviews PR: `gh pr review N --approve/--request-changes`
+9. **Teammate** addresses feedback if needed
+10. **After approval**, merge: `gh pr merge --squash --delete-branch`
 
-<!-- Numbered steps: break down → assign → claim → complete → review → next. -->
+## Plan Approval
+
+All implementer agents work in plan mode. Before writing code:
+- Submit your implementation plan to the team lead
+- Team lead reviews against architecture, conventions, and acceptance criteria
+- If rejected, revise based on feedback and resubmit
+- If you have a compelling argument for a different approach, make your case — the lead will approve good reasoning and log the decision
 
 ## PR Review Process
 
 {{PR_REVIEW}}
 
-<!-- Who reviews what, automated checks, merge strategy. -->
+<!-- Code reviewer reviews every PR via gh pr review.
+     PRs must link to issues. Commits must follow conventions.
+     Never merge without code review approval. -->
 
 ## Escalation Paths
 

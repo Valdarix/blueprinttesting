@@ -122,7 +122,17 @@ Write each agent to `.claude/agents/{{agent-name}}.md` with:
 - Workflow section with branch/PR conventions
 - Constraints section with guardrails
 
-All agents must be instructed on the PR workflow: create branch → implement → test → push → create PR → request review → address feedback → merge.
+All agents must be instructed on the GitHub issue-driven workflow (using the `gh-cli` skill for all GitHub operations):
+1. Claim a GitHub issue (`gh issue edit N --add-assignee @me`)
+2. Create a branch from the issue (`gh issue develop N --branch type/issue-N-description`)
+3. Work in plan mode — submit plan to team lead for approval before implementing
+4. Implement changes following project conventions
+5. Write/update tests
+6. Push and create a PR linking to the issue (`gh pr create --title "type: description" --body "Closes #N"`)
+7. Code reviewer reviews the PR (`gh pr review`)
+8. Address review feedback, then merge (`gh pr merge --squash --delete-branch`)
+
+**All type-specific agents must use `mode: plan`** (require plan approval). Only the project-lead uses default mode. When a teammate finishes planning, the team lead reviews and approves or rejects with feedback before the teammate can implement.
 
 ### 3C: Generate Rules
 
@@ -147,26 +157,40 @@ Organize rules by layer:
 
 Use `TeamCreate` to create a development team for the project.
 
-### 4B: Create Initial Tasks
+### 4B: Create GitHub Issues from Roadmap
 
-Read `docs/ROADMAP.md` Phase 1 items. Use `TaskCreate` to create tasks for each Phase 1 deliverable. Set appropriate dependencies between tasks with `TaskUpdate`.
+Read `docs/ROADMAP.md` Phase 1 items. For each task:
+1. Create a GitHub issue using `gh issue create --title "type: description" --labels "phase-1,area" --body "..."` with acceptance criteria in the body
+2. Also create a local task with `TaskCreate` that references the GitHub issue number
+3. Set appropriate dependencies between tasks with `TaskUpdate`
+
+This ensures every piece of work is tracked as a GitHub issue — the source of truth for project progress.
 
 ### 4C: Spawn Team Members
 
-Spawn team members from the agent definitions created in Phase 3B:
+Spawn team members from the agent definitions created in Phase 3B. **All type-specific agents must be spawned with plan mode required** so the team lead must approve their implementation plans before they write code.
+
 1. Spawn the `code-reviewer` agent first (needed for PR reviews)
-2. Spawn the `project-lead` agent
-3. Spawn type-specific agents as needed for Phase 1 tasks
+2. Spawn the `project-lead` agent (default mode — coordinates and approves plans)
+3. Spawn type-specific agents with `mode: plan` as needed for Phase 1 tasks
 
 Brief each team member with:
 - Project name and description
 - Their role and key responsibilities
 - Paths to relevant docs/ files they should read
-- Current task assignments
+- The GitHub issue-driven workflow: claim issue → branch → plan (get approval) → implement → PR → review → merge
+- That they must use `gh` CLI for all GitHub operations (issues, PRs, reviews)
 
-### 4D: Assign Work
+### 4D: Assign Work and Wait
 
-Use `TaskUpdate` to assign initial tasks to appropriate team members based on their specialization. The project-lead should coordinate ongoing work after initial assignment.
+Use `TaskUpdate` to assign initial tasks to appropriate team members based on their specialization. Tell teammates which GitHub issue to claim.
+
+**Important: Wait for teammates to complete their tasks before proceeding.** Do not start implementing tasks yourself — use delegate mode to focus on coordination. The project-lead should:
+- Monitor teammate progress
+- Review and approve/reject teammate plans when they submit them
+- Ensure code-reviewer reviews every PR before merge
+- Only proceed to the next phase when all current phase tasks are complete
+- Reassign work if a teammate gets stuck
 
 ## Reference Files
 
@@ -180,6 +204,7 @@ Use `TaskUpdate` to assign initial tasks to appropriate team members based on th
 
 ## Integration with Existing Skills
 
+- **gh-cli** — Used by ALL agents for GitHub operations (issues, PRs, reviews, branches). Core to the issue-driven development workflow. Every agent system prompt should reference this skill.
 - **doc-coauthoring** — Available for future doc revisions. Reference in generated CLAUDE.md.
 - **frontend-design** — Add to skills list for frontend-architect agent on web projects.
 - **web-artifacts-builder** — Available for frontend agents doing React/Tailwind/shadcn prototyping.
