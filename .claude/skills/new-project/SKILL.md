@@ -5,7 +5,7 @@ description: Bootstrap a new project end-to-end. Use when the user wants to star
 
 # New Project Bootstrap
 
-Bootstrap a new project through four phases: Discover, Document, Build, Launch. Each phase builds on the previous — do not skip phases or reorder them.
+Bootstrap a new project through five phases: Discover, Document, Build, Launch, Shutdown. Each phase builds on the previous — do not skip phases or reorder them.
 
 ## Phase 1: Discover
 
@@ -151,6 +151,23 @@ Organize rules by layer:
 - `backend/` — Backend-specific
 - `testing/` — Test file conventions
 
+### 3D: Generate Hooks
+
+Read `references/hooks-blueprints.md` for templates.
+
+Set up context rot mitigation hooks that prevent degradation during long-running team sessions:
+
+1. Create `.claude/hooks/` directory
+2. Create `.claude/hooks/session-start.js` from the SessionStart hook template
+3. Create `.claude/hooks/pre-compact.js` from the PreCompact hook template
+4. Create or merge into `.claude/settings.json` with:
+   - `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70` environment variable
+   - Hook config pointing to both hook scripts
+5. Add the Context Recovery block from hooks-blueprints.md to `.claude/CLAUDE.md`
+6. Verify hooks execute without errors: `node .claude/hooks/session-start.js <<< '{"source":"startup"}'` and `node .claude/hooks/pre-compact.js <<< '{}'`
+
+If `.claude/settings.json` already exists, merge the new keys into the existing file rather than overwriting it. If `.claude/settings.local.json` exists, do not modify it — it contains user-specific overrides.
+
 ## Phase 4: Launch
 
 ### 4A: Create Team
@@ -180,6 +197,8 @@ Brief each team member with:
 - Paths to relevant docs/ files they should read
 - The GitHub issue-driven workflow: claim issue → branch → plan (get approval) → implement → PR → review → merge
 - That they must use `gh` CLI for all GitHub operations (issues, PRs, reviews)
+- **Subagent delegation pattern:** Always spawn Task subagents for implementation work — keep your own context clean for coordination, planning, and communication. See docs/TEAM.md for full details.
+- **Context management:** Hooks are configured for automatic context recovery (70% autocompact threshold, SessionStart hook restores state after compaction). If responses degrade, run `/compact` proactively.
 
 ### 4D: Assign Work and Wait
 
@@ -192,6 +211,31 @@ Use `TaskUpdate` to assign initial tasks to appropriate team members based on th
 - Only proceed to the next phase when all current phase tasks are complete
 - Reassign work if a teammate gets stuck
 
+## Phase 5: Shutdown
+
+Gracefully shut down the team after all work is complete. **TeamDelete will fail if teammates are still active** — the shutdown handshake ensures it succeeds.
+
+### 5A: Shutdown Teammates
+
+For each teammate:
+1. Send a `shutdown_request` via `SendMessage` with `type: "shutdown_request"`
+2. Wait for the teammate to respond with `shutdown_response` and `approve: true`
+3. If a teammate rejects, check why — they may have unfinished work. Resolve the blocker, then retry.
+
+Shut down implementer agents first, then the code-reviewer, then the project-lead last.
+
+### 5B: Clean Up Team
+
+After **all** teammates have acknowledged shutdown:
+1. Call `TeamDelete` to remove the team and its task directory
+2. This cleans up `~/.claude/teams/{{team-name}}/` and `~/.claude/tasks/{{team-name}}/`
+
+### 5C: Final Updates
+
+1. Update `docs/ROADMAP.md` — check off completed tasks, note any deferred work
+2. Create a summary commit: `git add -A && git commit -m "chore: complete project bootstrap"`
+3. Report a summary to the user: what was built, how many issues created, team composition, and next steps
+
 ## Reference Files
 
 | File | Load When | Purpose |
@@ -201,6 +245,7 @@ Use `TaskUpdate` to assign initial tasks to appropriate team members based on th
 | [references/doc-templates.md](references/doc-templates.md) | Phase 2 | Templates for all docs/ files |
 | [references/agent-blueprints.md](references/agent-blueprints.md) | Phase 3B | Agent definition templates |
 | [references/rules-blueprints.md](references/rules-blueprints.md) | Phase 3C | Rule templates by stack/layer |
+| [references/hooks-blueprints.md](references/hooks-blueprints.md) | Phase 3D | Context rot mitigation hooks and settings |
 
 ## Integration with Existing Skills
 

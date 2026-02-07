@@ -463,6 +463,36 @@ All implementer agents work in plan mode. Before writing code:
      PRs must link to issues. Commits must follow conventions.
      Never merge without code review approval. -->
 
+## Context Management
+
+### Subagent Delegation
+
+All implementer agents delegate actual implementation to **Task subagents** — fresh context per issue. This prevents context rot during long-running sessions.
+
+**How it works:**
+1. Teammate claims issue and plans the approach (in their own context)
+2. After plan approval, teammate spawns a Task subagent with: issue details, approved plan, branch name, doc paths
+3. Subagent implements in a fresh context window, creates the PR
+4. Teammate verifies the result, handles review feedback (via another subagent if non-trivial)
+
+**Why:** Implementation details (code diffs, test output, error traces) fill context fast. By delegating to subagents, each teammate's context stays clean for coordination, planning, and communication — the high-value work that benefits from continuity.
+
+### Automatic Context Recovery
+
+The project is configured with context rot mitigation:
+- **70% autocompact threshold** — compaction triggers early, before degradation gets severe (default is ~95%)
+- **SessionStart hook** — after compaction, automatically restores task state, team config, and project doc pointers
+- **CLAUDE.md persistence** — CLAUDE.md files survive compaction and contain recovery instructions
+
+### Self-Recovery Checklist
+
+If you notice degraded responses or lost context after compaction:
+1. Run `TaskList` to see all tasks and their current status
+2. Read `docs/TEAM.md` for team roster, roles, and workflow
+3. Read `docs/ROADMAP.md` for current phase and priorities
+4. Check GitHub: `gh issue list --assignee @me` and `gh pr list`
+5. If severely degraded, run `/compact` proactively
+
 ## Escalation Paths
 
 {{ESCALATION}}
@@ -544,4 +574,19 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for full details.
 {{TEAM_WORKFLOW_NOTES}}
 
 <!-- Task system, direct messages, conventions, decision logging. -->
+
+## Context Recovery
+
+This file survives context compaction and serves as the recovery anchor.
+
+**Automatic recovery:** The SessionStart hook (`.claude/hooks/session-start.js`) restores task state, team config, and project context pointers after compaction. You do not need to manually recover this state.
+
+**If you notice degraded responses or lost context:**
+1. Run `TaskList` to see all tasks and their current status
+2. Read `docs/TEAM.md` for the team roster, roles, and workflow
+3. Read `docs/ROADMAP.md` for current phase and priorities
+4. Check GitHub: `gh issue list --assignee @me` and `gh pr list`
+5. If severely degraded, run `/compact` proactively
+
+**Subagent delegation:** Always delegate implementation work to Task subagents (fresh context per issue). Keep your own context clean for coordination, plan review, and communication. See docs/TEAM.md for the full delegation workflow.
 ```

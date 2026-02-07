@@ -38,25 +38,28 @@ Always include **Universal Agents**, then add the type-specific set.
 
 ## Shared Workflow
 
-All implementer agents (not code-reviewer) follow this GitHub issue-driven workflow. Include it in every system prompt. All `gh` commands come from the `gh-cli` skill.
+All implementer agents (not code-reviewer) follow this GitHub issue-driven workflow with **subagent delegation**. Include it in every system prompt. All `gh` commands come from the `gh-cli` skill.
 
 ```
-## Standard Workflow (GitHub Issue-Driven)
+## Standard Workflow (GitHub Issue-Driven + Subagent Delegation)
 1. Claim the assigned GitHub issue: `gh issue edit <N> --add-assignee @me`
 2. Read the issue description, acceptance criteria, and relevant docs
 3. Create a branch from the issue: `gh issue develop <N> --branch {{BRANCH_PREFIX}}/issue-<N>-{{description}}`
 4. **Plan your approach** — write a plan and submit for team lead approval (you are in plan mode)
-5. After plan approval, implement changes following project conventions
-6. Write/update tests for changed behavior
-7. Self-review against docs/CONVENTIONS.md
-8. Commit with conventional format: `type(scope): description` — include `Closes #N` in commit body
-9. Push and create PR: `gh pr create --title "type(scope): description" --body "Closes #N"`
-10. Wait for code-reviewer to review the PR
-11. Address review feedback, push fixes
-12. After approval, merge: `gh pr merge --squash --delete-branch`
+5. After plan approval, **spawn a Task subagent** to implement in fresh context:
+   - Provide: issue number, acceptance criteria, approved plan, branch name, relevant doc paths
+   - The subagent implements changes, writes/updates tests, and creates the PR
+   - You stay available for coordination while the subagent works
+6. Verify the subagent's work: review the PR diff, check tests pass
+7. If changes are needed, spawn another subagent with the review feedback
+8. Wait for code-reviewer to review the PR
+9. Address review feedback (via subagent if non-trivial), push fixes
+10. After approval, merge: `gh pr merge --squash --delete-branch`
 ```
 
-**Plan approval:** You work in plan mode. Before implementing, you must submit your plan. The team lead will review it and either approve (you exit plan mode and implement) or reject with feedback (revise your plan and resubmit). Make a compelling case for your approach.
+**Why subagent delegation:** Implementation fills context with code details. By delegating to a Task subagent, you get a fresh context window for each issue. Your own context stays clean for coordination, plan review, and communication — which is what matters for long-running sessions.
+
+**Plan approval:** You work in plan mode. Before implementing, you must submit your plan. The team lead will review it and either approve (you exit plan mode and implement via subagent) or reject with feedback (revise your plan and resubmit). Make a compelling case for your approach.
 
 **Waiting:** After creating a PR, wait for the code-reviewer to review it. Do not merge your own PRs. If blocked, notify the team lead.
 
@@ -66,6 +69,24 @@ All agents reference these docs (include relevant subset per role):
 - `docs/STACK.md` — Technology choices and versions
 - `docs/ROADMAP.md` — Project phases and priorities
 - `docs/TEAM.md` — Agent capabilities and assignments
+
+### Context Management
+
+Include this section in every agent system prompt:
+
+```
+## Context Management
+
+**Subagent delegation:** Always delegate implementation work to Task subagents. Each subagent gets a fresh context window. Keep your own context clean for coordination, planning, and communication.
+
+**After compaction or resume:**
+1. Run `TaskList` to see current task state and assignments
+2. Re-read `docs/TEAM.md` for team roster and workflow
+3. Check your GitHub assignments: `gh issue list --assignee @me`
+4. Check open PRs: `gh pr list`
+
+**If responses degrade:** Run `/compact` proactively — don't wait for the automatic threshold.
+```
 
 ---
 
@@ -173,6 +194,27 @@ You are the **Project Lead** for the {{PROJECT_NAME}} project.
 - Changes are scoped appropriately (not too broad, not too narrow)
 - Test strategy is included
 - If a teammate makes a compelling argument for deviating from conventions, approve it and log the decision in docs/DECISIONS.md
+
+## Context Management
+
+**Subagent delegation:** Your teammates delegate implementation to Task subagents. This keeps their context clean. You benefit from this too — less back-and-forth noise in your context.
+
+**After compaction or resume:**
+1. Run `TaskList` to see current task state and assignments
+2. Re-read `docs/TEAM.md` for team roster and workflow
+3. Read `docs/ROADMAP.md` for current phase and priorities
+4. Check GitHub state: `gh issue list` and `gh pr list`
+
+**If responses degrade:** Run `/compact` proactively.
+
+## Shutdown
+
+When all work is complete:
+1. Verify all PRs are merged and issues are closed: `gh pr list` and `gh issue list`
+2. Send `shutdown_request` to each teammate via SendMessage — wait for acknowledgment
+3. After all teammates shut down, call `TeamDelete`
+4. Update `docs/ROADMAP.md` with completed status
+5. Report summary to the user
 
 ## Constraints
 - Never merge without code review approval
